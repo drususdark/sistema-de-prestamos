@@ -19,62 +19,59 @@ const CrearVale = () => {
       try {
         setLoading(true);
         
+        // Datos locales de respaldo que siempre estarán disponibles
+        const datosLocales = [
+          { id: 1, nombre: 'Local 1' },
+          { id: 2, nombre: 'Local 2' },
+          { id: 3, nombre: 'Local 3' }
+        ];
+        
+        // Establecer el local actual basado en el usuario
+        if (user) {
+          setLocalPresta(user.local || 'Local 1');
+        } else {
+          setLocalPresta('Local 1'); // Valor predeterminado si no hay usuario
+        }
+        
         // Verificar si la URL del backend está configurada
         const backendUrl = process.env.REACT_APP_API_URL;
         if (!backendUrl) {
           console.error('URL del backend no configurada en variables de entorno');
-          // Solución temporal: usar datos locales si no hay conexión al backend
-          setLocales([
-            { id: 1, nombre: 'Local 1' },
-            { id: 2, nombre: 'Local 2' },
-            { id: 3, nombre: 'Local 3' }
-          ]);
-          
-          // Establecer el local actual basado en el usuario
-          if (user) {
-            setLocalPresta(user.local || 'Local 1');
-          }
-          
+          // Usar datos locales
+          setLocales(datosLocales);
           setLoading(false);
           return;
         }
         
         // Intentar cargar los locales desde el backend
-        const response = await axios.get(`${backendUrl}/api/locales`);
-        
-        if (response.data && Array.isArray(response.data)) {
-          setLocales(response.data);
+        try {
+          const response = await axios.get(`${backendUrl}/api/locales`);
           
-          // Establecer el local actual basado en el usuario
-          if (user) {
-            setLocalPresta(user.local || 'Local 1');
+          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+            setLocales(response.data);
+          } else {
+            // Si la respuesta no tiene el formato esperado o está vacía, usar datos locales
+            console.warn('Formato de respuesta inesperado o vacío, usando datos locales');
+            setLocales(datosLocales);
           }
-        } else {
-          // Si la respuesta no tiene el formato esperado, usar datos locales
-          console.warn('Formato de respuesta inesperado, usando datos locales');
-          setLocales([
-            { id: 1, nombre: 'Local 1' },
-            { id: 2, nombre: 'Local 2' },
-            { id: 3, nombre: 'Local 3' }
-          ]);
-          
-          if (user) {
-            setLocalPresta(user.local || 'Local 1');
-          }
+        } catch (error) {
+          console.error('Error al cargar los locales:', error);
+          setError('Error al cargar los locales. Usando datos locales.');
+          setLocales(datosLocales);
         }
       } catch (error) {
-        console.error('Error al cargar los locales:', error);
-        setError('Error al cargar los locales. Usando datos locales.');
+        console.error('Error general:', error);
+        setError('Error general. Usando datos locales.');
         
-        // Solución temporal: usar datos locales si hay un error
+        // En caso de error, asegurarse de que haya datos locales
         setLocales([
           { id: 1, nombre: 'Local 1' },
           { id: 2, nombre: 'Local 2' },
           { id: 3, nombre: 'Local 3' }
         ]);
         
-        if (user) {
-          setLocalPresta(user.local || 'Local 1');
+        if (!localPresta) {
+          setLocalPresta('Local 1');
         }
       } finally {
         setLoading(false);
@@ -84,7 +81,7 @@ const CrearVale = () => {
     cargarLocales();
   }, [user]);
 
-  // Definición de la función handleGuardarVale que faltaba
+  // Definición de la función handleGuardarVale
   const handleGuardarVale = async () => {
     // Validar que todos los campos requeridos estén completos
     if (!localRecibe) {
@@ -200,6 +197,13 @@ const CrearVale = () => {
                         {local.nombre}
                       </option>
                     ))}
+                  {/* Asegurarse de que siempre haya al menos una opción si el filtrado elimina todas */}
+                  {locales.filter(local => local.nombre !== localPresta).length === 0 && (
+                    <>
+                      <option value="Local 2">Local 2</option>
+                      <option value="Local 3">Local 3</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div className="col-md-6">
