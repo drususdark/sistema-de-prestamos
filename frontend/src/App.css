@@ -1,0 +1,8 @@
+/* Estilos básicos para la aplicación */
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Estos estilos son opcionales y pueden ser modificados según las necesidades del diseño */
