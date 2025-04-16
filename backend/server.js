@@ -9,7 +9,7 @@ initDb();
 
 // Crear la aplicación Express
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 10000;
 
 // Middleware
 app.use(cors());
@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Rutas
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
   res.json({ message: 'API de Sistema de Préstamos entre Locales' });
 });
 
@@ -33,11 +33,32 @@ app.use('/api/usuarios', usuariosRoutes);
 
 // Servir archivos estáticos en producción
 if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
-  
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-  });
+  // Verificar si la carpeta build existe
+  const buildPath = path.join(__dirname, '../frontend/build');
+  try {
+    // Intentar acceder a la carpeta build
+    require('fs').accessSync(buildPath);
+    console.log('Carpeta frontend/build encontrada, sirviendo archivos estáticos');
+    
+    // Servir archivos estáticos
+    app.use(express.static(buildPath));
+    
+    // Ruta para manejar todas las solicitudes que no coincidan con rutas API
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(buildPath, 'index.html'));
+    });
+  } catch (error) {
+    console.error('Error al acceder a la carpeta frontend/build:', error);
+    console.log('Sirviendo solo la API sin frontend');
+    
+    // Si no existe la carpeta build, solo servir la API
+    app.get('/', (req, res) => {
+      res.json({ 
+        message: 'API de Sistema de Préstamos entre Locales', 
+        error: 'Frontend no encontrado. Por favor acceda a través de la URL de Vercel.'
+      });
+    });
+  }
 }
 
 // Manejo de errores
