@@ -1,9 +1,6 @@
-// Solución para el problema del desplegable sin opciones
-// Este código debe ser implementado en el componente CrearVale.js o similar
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-// ... otros imports necesarios
+import { useAuth } from '../context/AuthContext'; // Importación correcta del hook useAuth
 
 const CrearVale = () => {
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0]);
@@ -14,7 +11,7 @@ const CrearVale = () => {
   const [locales, setLocales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const { user } = useAuth(); // Asumiendo que tienes un contexto de autenticación
+  const { user } = useAuth(); // Uso del hook useAuth
 
   // Cargar la lista de locales al montar el componente
   useEffect(() => {
@@ -87,7 +84,69 @@ const CrearVale = () => {
     cargarLocales();
   }, [user]);
 
-  // Resto del componente (manejo de formulario, agregar/eliminar items, etc.)
+  // Definición de la función handleGuardarVale que faltaba
+  const handleGuardarVale = async () => {
+    // Validar que todos los campos requeridos estén completos
+    if (!localRecibe) {
+      setError('Por favor seleccione un local que recibe');
+      return;
+    }
+
+    if (!personaResponsable) {
+      setError('Por favor ingrese el nombre de la persona responsable');
+      return;
+    }
+
+    // Validar que haya al menos un item con descripción
+    const itemsValidos = items.filter(item => item.descripcion.trim() !== '');
+    if (itemsValidos.length === 0) {
+      setError('Por favor agregue al menos un item de mercadería');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      // Preparar los datos del vale
+      const valeData = {
+        fecha,
+        localPresta,
+        localRecibe,
+        personaResponsable,
+        items: itemsValidos,
+        estado: 'Pendiente'
+      };
+
+      // Enviar los datos al backend si está configurado
+      const backendUrl = process.env.REACT_APP_API_URL;
+      if (backendUrl) {
+        await axios.post(`${backendUrl}/api/vales`, valeData);
+        
+        // Limpiar el formulario después de guardar
+        setLocalRecibe('');
+        setPersonaResponsable('');
+        setItems([{ descripcion: '' }]);
+        
+        alert('Vale guardado exitosamente');
+      } else {
+        // Si no hay backend, simular guardado exitoso
+        console.log('Simulando guardado de vale:', valeData);
+        
+        // Limpiar el formulario después de guardar
+        setLocalRecibe('');
+        setPersonaResponsable('');
+        setItems([{ descripcion: '' }]);
+        
+        alert('Vale guardado exitosamente (modo simulación)');
+      }
+    } catch (error) {
+      console.error('Error al guardar el vale:', error);
+      setError('Error al guardar el vale. Por favor intente nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Renderizado del formulario
   return (
