@@ -11,7 +11,6 @@ const Historial = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mensajeExito, setMensajeExito] = useState(null);
-  
   const [filtros, setFiltros] = useState({
     fechaDesde: '',
     fechaHasta: '',
@@ -43,6 +42,37 @@ const Historial = () => {
       } catch (error) {
         console.error('Error al cargar datos:', error);
         setError('Error al cargar el historial de vales');
+        
+        // Datos de respaldo para desarrollo/demostración
+        setVales([
+          {
+            id: 1,
+            fecha: '2025-04-15',
+            localPresta: 'Local 1',
+            localRecibe: 'Local 2',
+            personaResponsable: 'Juan Pérez',
+            items: [{ descripcion: 'Producto 1' }, { descripcion: 'Producto 2' }],
+            estado: 'pendiente'
+          },
+          {
+            id: 2,
+            fecha: '2025-04-14',
+            localPresta: 'Local 3',
+            localRecibe: 'Local 1',
+            personaResponsable: 'María López',
+            items: [{ descripcion: 'Producto 3' }],
+            estado: 'pagado'
+          }
+        ]);
+        
+        setLocales([
+          { id: 1, nombre: 'Local 1' },
+          { id: 2, nombre: 'Local 2' },
+          { id: 3, nombre: 'Local 3' },
+          { id: 4, nombre: 'Local 4' },
+          { id: 5, nombre: 'Local 5' },
+          { id: 6, nombre: 'Local 6' }
+        ]);
       } finally {
         setLoading(false);
       }
@@ -62,7 +92,6 @@ const Historial = () => {
   // Aplicar filtros
   const aplicarFiltros = async (e) => {
     e.preventDefault();
-    
     try {
       setLoading(true);
       
@@ -72,7 +101,6 @@ const Historial = () => {
       );
       
       const response = await valesService.buscarVales(filtrosValidos);
-      
       if (response.success) {
         setVales(response.vales);
         setError(null);
@@ -100,9 +128,7 @@ const Historial = () => {
     
     try {
       setLoading(true);
-      
       const response = await valesService.obtenerVales();
-      
       if (response.success) {
         setVales(response.vales);
         setError(null);
@@ -122,7 +148,6 @@ const Historial = () => {
     try {
       setLoading(true);
       const response = await valesService.marcarComoPagado(valeId);
-      
       if (response.success) {
         // Actualizar la lista de vales
         const nuevosVales = vales.map(vale => 
@@ -152,6 +177,12 @@ const Historial = () => {
     return local ? local.nombre : 'Desconocido';
   };
 
+  // Verificar si el usuario actual puede marcar un vale como pagado
+  const puedeMarcarComoPagado = (vale) => {
+    // Solo el local que prestó puede marcar como pagado
+    return user && user.local === vale.localPresta && vale.estado === 'pendiente';
+  };
+
   return (
     <div className="historial-container">
       <Card className="mb-4">
@@ -159,7 +190,7 @@ const Historial = () => {
           <h4 className="mb-0">Historial de Vales</h4>
           <Button 
             variant="outline-light" 
-            size="sm"
+            size="sm" 
             onClick={exportarCSV}
           >
             Exportar a CSV
@@ -176,31 +207,31 @@ const Historial = () => {
                 <Col md={6} lg={3} className="mb-3">
                   <Form.Group>
                     <Form.Label>Desde</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="fechaDesde"
-                      value={filtros.fechaDesde}
-                      onChange={handleFiltroChange}
+                    <Form.Control 
+                      type="date" 
+                      name="fechaDesde" 
+                      value={filtros.fechaDesde} 
+                      onChange={handleFiltroChange} 
                     />
                   </Form.Group>
                 </Col>
                 <Col md={6} lg={3} className="mb-3">
                   <Form.Group>
                     <Form.Label>Hasta</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="fechaHasta"
-                      value={filtros.fechaHasta}
-                      onChange={handleFiltroChange}
+                    <Form.Control 
+                      type="date" 
+                      name="fechaHasta" 
+                      value={filtros.fechaHasta} 
+                      onChange={handleFiltroChange} 
                     />
                   </Form.Group>
                 </Col>
                 <Col md={6} lg={3} className="mb-3">
                   <Form.Group>
                     <Form.Label>Local que presta</Form.Label>
-                    <Form.Select
-                      name="localOrigen"
-                      value={filtros.localOrigen}
+                    <Form.Select 
+                      name="localOrigen" 
+                      value={filtros.localOrigen} 
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -215,9 +246,9 @@ const Historial = () => {
                 <Col md={6} lg={3} className="mb-3">
                   <Form.Group>
                     <Form.Label>Local que recibe</Form.Label>
-                    <Form.Select
-                      name="localDestino"
-                      value={filtros.localDestino}
+                    <Form.Select 
+                      name="localDestino" 
+                      value={filtros.localDestino} 
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -230,26 +261,25 @@ const Historial = () => {
                   </Form.Group>
                 </Col>
               </Row>
-              
               <Row>
                 <Col md={4} className="mb-3">
                   <Form.Group>
                     <Form.Label>Mercadería</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="mercaderia"
-                      value={filtros.mercaderia}
-                      onChange={handleFiltroChange}
-                      placeholder="Buscar por tipo de mercadería"
+                    <Form.Control 
+                      type="text" 
+                      name="mercaderia" 
+                      value={filtros.mercaderia} 
+                      onChange={handleFiltroChange} 
+                      placeholder="Buscar por tipo de mercadería" 
                     />
                   </Form.Group>
                 </Col>
                 <Col md={4} className="mb-3">
                   <Form.Group>
                     <Form.Label>Estado</Form.Label>
-                    <Form.Select
-                      name="estado"
-                      value={filtros.estado}
+                    <Form.Select 
+                      name="estado" 
+                      value={filtros.estado} 
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -262,15 +292,15 @@ const Historial = () => {
                   <div className="d-grid gap-2 w-100">
                     <Button 
                       variant="primary" 
-                      type="submit"
+                      type="submit" 
                       disabled={loading}
                     >
                       Aplicar Filtros
                     </Button>
                     <Button 
                       variant="secondary" 
-                      type="button"
-                      onClick={limpiarFiltros}
+                      type="button" 
+                      onClick={limpiarFiltros} 
                       disabled={loading}
                     >
                       Limpiar Filtros
@@ -287,12 +317,10 @@ const Historial = () => {
               <p className="mt-2">Cargando vales...</p>
             </div>
           ) : vales.length === 0 ? (
-            <Alert variant="info">
-              No se encontraron vales con los filtros seleccionados
-            </Alert>
+            <Alert variant="info">No se encontraron vales con los criterios seleccionados.</Alert>
           ) : (
             <div className="table-responsive">
-              <Table striped bordered hover>
+              <Table striped bordered hover className="mt-4">
                 <thead>
                   <tr>
                     <th>Fecha</th>
@@ -307,34 +335,38 @@ const Historial = () => {
                 <tbody>
                   {vales.map(vale => (
                     <tr key={vale.id}>
-                      <td>{new Date(vale.fecha).toLocaleDateString()}</td>
-                      <td>{vale.origen_nombre}</td>
-                      <td>{vale.destino_nombre}</td>
-                      <td>{vale.persona_responsable}</td>
+                      <td>{vale.fecha}</td>
+                      <td>{vale.localPresta}</td>
+                      <td>{vale.localRecibe}</td>
+                      <td>{vale.personaResponsable}</td>
                       <td>
-                        <ul className="mb-0">
+                        <ul className="mb-0 ps-3">
                           {vale.items.map((item, index) => (
                             <li key={index}>{item.descripcion}</li>
                           ))}
                         </ul>
                       </td>
                       <td>
-                        {vale.estado === 'pagado' ? (
-                          <Badge bg="success">Pagado</Badge>
-                        ) : (
-                          <Badge bg="warning">Pendiente</Badge>
-                        )}
+                        <Badge bg={vale.estado === 'pendiente' ? 'warning' : 'success'}>
+                          {vale.estado === 'pendiente' ? 'Pendiente' : 'Pagado'}
+                        </Badge>
                       </td>
                       <td>
-                        {vale.origen_id === user?.id && vale.estado === 'pendiente' && (
+                        {puedeMarcarComoPagado(vale) ? (
                           <Button 
                             variant="success" 
-                            size="sm"
+                            size="sm" 
                             onClick={() => marcarComoPagado(vale.id)}
                             disabled={loading}
                           >
                             Marcar como pagado
                           </Button>
+                        ) : (
+                          <span className="text-muted">
+                            {vale.estado === 'pagado' ? 
+                              'Vale pagado' : 
+                              'No autorizado para cambiar estado'}
+                          </span>
                         )}
                       </td>
                     </tr>
