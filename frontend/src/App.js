@@ -6,7 +6,7 @@ import Login from './pages/Login';
 import Navbar from './components/Navbar';
 import CrearVale from './pages/CrearVale';
 import Historial from './pages/Historial';
-import './App.css';
+import './index.css'; // Cambia esta línea para importar 'index.css' en lugar de 'App.css'
 
 // Componente para rutas protegidas
 const ProtectedRoute = ({ children }) => {
