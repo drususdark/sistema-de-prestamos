@@ -13,19 +13,19 @@ const CrearVale = () => {
   const [error, setError] = useState('');
   const { user } = useAuth();
 
-// Establecer el local actual basado en el usuario
-if (user) {
-  setLocalPresta(user.nombre); // Usar user.nombre en lugar de user.local
-} else {
-  setLocalPresta('Local 1');
-}
-  
   // Cargar la lista de locales al montar el componente
   useEffect(() => {
     const cargarLocales = async () => {
       try {
         setLoading(true);
         
+        // Establecer el local actual basado en el usuario
+        if (user) {
+          setLocalPresta(user.nombre);
+        } else {
+          setLocalPresta('Local 1');
+        }
+
         // Datos locales de respaldo con los 6 locales
         const datosLocales = [
           { id: 1, nombre: 'Local 1' },
@@ -35,14 +35,7 @@ if (user) {
           { id: 5, nombre: 'Local 5' },
           { id: 6, nombre: 'Local 6' }
         ];
-        
-        // Establecer el local actual basado en el usuario
-        if (user) {
-          setLocalPresta(user.local || 'Local 1');
-        } else {
-          setLocalPresta('Local 1');
-        }
-        
+
         // Verificar si la URL del backend está configurada
         const backendUrl = process.env.REACT_APP_API_URL;
         if (!backendUrl) {
@@ -51,11 +44,10 @@ if (user) {
           setLoading(false);
           return;
         }
-        
+
         // Intentar cargar los locales desde el backend
         try {
           const response = await axios.get(`${backendUrl}/api/locales`);
-          
           if (response.data && Array.isArray(response.data) && response.data.length > 0) {
             console.log('Locales cargados desde API:', response.data);
             setLocales(response.data);
@@ -123,22 +115,18 @@ if (user) {
       const backendUrl = process.env.REACT_APP_API_URL;
       if (backendUrl) {
         await axios.post(`${backendUrl}/api/vales`, valeData);
-        
         // Limpiar el formulario después de guardar
         setLocalRecibe('');
         setPersonaResponsable('');
         setItems([{ descripcion: '' }]);
-        
         alert('Vale guardado exitosamente');
       } else {
         // Si no hay backend, simular guardado exitoso
         console.log('Simulando guardado de vale:', valeData);
-        
         // Limpiar el formulario después de guardar
         setLocalRecibe('');
         setPersonaResponsable('');
         setItems([{ descripcion: '' }]);
-        
         alert('Vale guardado exitosamente (modo simulación)');
       }
     } catch (error) {
@@ -148,7 +136,7 @@ if (user) {
       setLoading(false);
     }
   };
-  
+
   // Renderizado del formulario
   return (
     <div className="container mt-4">
@@ -182,7 +170,7 @@ if (user) {
                 />
               </div>
             </div>
-            
+
             {/* Campo de local que recibe */}
             <div className="row mb-3">
               <div className="col-md-6">
@@ -225,7 +213,7 @@ if (user) {
                 />
               </div>
             </div>
-            
+
             {/* Sección de mercadería */}
             <div className="card mb-3">
               <div className="card-header d-flex justify-content-between align-items-center">
@@ -259,9 +247,11 @@ if (user) {
                         type="button"
                         className="btn btn-danger"
                         onClick={() => {
-                          const newItems = [...items];
-                          newItems.splice(index, 1);
-                          setItems(newItems.length ? newItems : [{ descripcion: '' }]);
+                          if (items.length > 1) {
+                            const newItems = [...items];
+                            newItems.splice(index, 1);
+                            setItems(newItems);
+                          }
                         }}
                       >
                         Eliminar
@@ -271,15 +261,16 @@ if (user) {
                 ))}
               </div>
             </div>
-            
+
             {/* Botón de guardar */}
-            <div className="d-grid">
+            <div className="d-grid gap-2">
               <button
                 type="button"
                 className="btn btn-primary"
                 onClick={handleGuardarVale}
+                disabled={loading}
               >
-                Guardar Vale
+                {loading ? 'Guardando...' : 'Guardar Vale'}
               </button>
             </div>
           </form>
