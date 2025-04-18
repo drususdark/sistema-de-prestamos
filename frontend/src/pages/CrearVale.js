@@ -84,7 +84,6 @@ const CrearVale = () => {
       setError('Por favor seleccione un local que recibe');
       return;
     }
-
     if (!personaResponsable) {
       setError('Por favor ingrese el nombre de la persona responsable');
       return;
@@ -102,10 +101,11 @@ const CrearVale = () => {
       setError('');
 
       // Preparar los datos del vale
+      // AQUÍ ESTÁ LA CORRECCIÓN: Usar local_destino_id en lugar de localRecibe
       const valeData = {
         fecha,
         localPresta,
-        localRecibe,
+        local_destino_id: localRecibe, // Cambio de nombre de propiedad para que coincida con lo esperado por el servicio
         personaResponsable,
         items: itemsValidos,
         estado: 'Pendiente'
