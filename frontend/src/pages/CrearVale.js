@@ -101,11 +101,10 @@ const CrearVale = () => {
       setError('');
 
       // Preparar los datos del vale
-      // AQUÍ ESTÁ LA CORRECCIÓN: Usar local_destino_id en lugar de localRecibe
       const valeData = {
         fecha,
         localPresta,
-        local_destino_id: localRecibe, // Cambio de nombre de propiedad para que coincida con lo esperado por el servicio
+        local_destino_id: localRecibe, // Ahora localRecibe contiene el ID numérico
         personaResponsable,
         items: itemsValidos,
         estado: 'Pendiente'
@@ -185,18 +184,18 @@ const CrearVale = () => {
                   {locales
                     .filter(local => local.nombre !== localPresta) // Filtrar el local actual
                     .map(local => (
-                      <option key={local.id} value={local.nombre}>
+                      <option key={local.id} value={local.id}>  {/* CAMBIO AQUÍ: Usar local.id en lugar de local.nombre */}
                         {local.nombre}
                       </option>
                     ))}
                   {/* Asegurarse de que siempre haya al menos una opción si el filtrado elimina todas */}
                   {locales.filter(local => local.nombre !== localPresta).length === 0 && (
                     <>
-                      <option value="Local 2">Local 2</option>
-                      <option value="Local 3">Local 3</option>
-                      <option value="Local 4">Local 4</option>
-                      <option value="Local 5">Local 5</option>
-                      <option value="Local 6">Local 6</option>
+                      <option value="2">Local 2</option>  {/* CAMBIO AQUÍ: Usar IDs numéricos en lugar de nombres */}
+                      <option value="3">Local 3</option>
+                      <option value="4">Local 4</option>
+                      <option value="5">Local 5</option>
+                      <option value="6">Local 6</option>
                     </>
                   )}
                 </select>
