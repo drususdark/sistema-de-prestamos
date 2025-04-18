@@ -36,40 +36,24 @@ const CrearVale = () => {
           { id: 6, nombre: 'Local 6' }
         ];
 
-        // Verificar si la URL del backend está configurada
-        const backendUrl = process.env.REACT_APP_API_URL;
-        if (!backendUrl) {
-          console.log('URL del backend no configurada, usando datos locales');
-          setLocales(datosLocales);
-          setLoading(false);
-          return;
-        }
-
-        // Intentar cargar los locales desde el backend
+        // Verificar si la URL de la API está disponible
         try {
-          const response = await axios.get(`${backendUrl}/api/locales`);
-          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-            console.log('Locales cargados desde API:', response.data);
-            setLocales(response.data);
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/locales`);
+          if (response.data && response.data.success) {
+            setLocales(response.data.locales);
           } else {
-            console.warn('Respuesta de API vacía, usando datos locales');
+            console.log('Respuesta de API vacía, usando datos locales');
             setLocales(datosLocales);
           }
         } catch (error) {
-          console.error('Error al cargar los locales desde API:', error);
+          console.log('Error al obtener locales de la API, usando datos locales', error);
           setLocales(datosLocales);
         }
+
+        setLoading(false);
       } catch (error) {
-        console.error('Error general:', error);
-        setLocales([
-          { id: 1, nombre: 'Local 1' },
-          { id: 2, nombre: 'Local 2' },
-          { id: 3, nombre: 'Local 3' },
-          { id: 4, nombre: 'Local 4' },
-          { id: 5, nombre: 'Local 5' },
-          { id: 6, nombre: 'Local 6' }
-        ]);
-      } finally {
+        console.error('Error al cargar locales:', error);
+        setError('Error al cargar los datos. Por favor, recargue la página.');
         setLoading(false);
       }
     };
@@ -77,233 +61,193 @@ const CrearVale = () => {
     cargarLocales();
   }, [user]);
 
-  // Función para encontrar el ID del local por su nombre
-  const encontrarIdPorNombre = (nombre) => {
-    const local = locales.find(l => l.nombre === nombre);
-    return local ? local.id : null;
+  // Agregar un nuevo item vacío
+  const agregarItem = () => {
+    setItems([...items, { descripcion: '' }]);
   };
 
-  // Definición de la función handleGuardarVale
+  // Actualizar un item existente
+  const actualizarItem = (index, value) => {
+    const newItems = [...items];
+    newItems[index].descripcion = value;
+    setItems(newItems);
+  };
+
+  // Guardar el vale
   const handleGuardarVale = async () => {
-    // Validar que todos los campos requeridos estén completos
-    if (!localRecibe) {
-      setError('Por favor seleccione un local que recibe');
-      return;
-    }
-    if (!personaResponsable) {
-      setError('Por favor ingrese el nombre de la persona responsable');
-      return;
-    }
-
-    // Validar que haya al menos un item con descripción
-    const itemsValidos = items.filter(item => item.descripcion.trim() !== '');
-    if (itemsValidos.length === 0) {
-      setError('Por favor agregue al menos un item de mercadería');
-      return;
-    }
-
     try {
       setLoading(true);
       setError('');
 
-      // Obtener el ID del local que recibe
-      // Si localRecibe ya es un ID (número o string numérico), lo usamos directamente
-      // Si es un nombre, buscamos su ID correspondiente
-      let localRecibeId;
-      
-      if (!isNaN(localRecibe)) {
-        // Si localRecibe es un número o string numérico, lo usamos como ID
-        localRecibeId = parseInt(localRecibe);
-      } else {
-        // Si es un nombre, buscamos su ID
-        localRecibeId = encontrarIdPorNombre(localRecibe);
-        
-        // Si no encontramos el ID, usamos un valor por defecto basado en el nombre
-        if (!localRecibeId) {
-          // Extraer número del nombre del local (ej: "Local 2" -> 2)
-          const match = localRecibe.match(/\d+/);
-          if (match) {
-            localRecibeId = parseInt(match[0]);
-          } else {
-            // Si todo falla, usamos un ID por defecto
-            localRecibeId = 2; // Local 2 como fallback
-          }
-        }
+      // Validar campos
+      if (!fecha || !localRecibe || !personaResponsable) {
+        setError('Por favor, complete todos los campos requeridos.');
+        setLoading(false);
+        return;
       }
 
-      // Preparar los datos del vale
+      // Validar que haya al menos un item con descripción
+      const itemsValidos = items.filter(item => item.descripcion.trim() !== '');
+      if (itemsValidos.length === 0) {
+        setError('Por favor, agregue al menos un item.');
+        setLoading(false);
+        return;
+      }
+
+      // Encontrar el ID del local que recibe basado en su nombre
+      const localRecibeObj = locales.find(local => local.id.toString() === localRecibe.toString());
+      if (!localRecibeObj) {
+        setError('Por favor seleccione un local que recibe');
+        setLoading(false);
+        return;
+      }
+
+      // Crear objeto de datos del vale
       const valeData = {
         fecha,
         localPresta,
-        local_destino_id: localRecibeId, // Usar el ID numérico
-        persona_responsable: personaResponsable, // Cambiar a persona_responsable para coincidir con el backend
+        local_destino_id: parseInt(localRecibe), // Convertir a número para asegurar compatibilidad
+        persona_responsable: personaResponsable,
         items: itemsValidos,
-        estado: 'Pendiente'
+        estado: 'pendiente' // Asegurar que el estado sea en minúsculas
       };
 
-      console.log('Datos del vale a guardar:', valeData);
-
-      // Intentar guardar localmente primero
+      // Intentar guardar el vale
       try {
-        // Simulación de guardado local
-        const valesActuales = JSON.parse(localStorage.getItem('vales') || '[]');
-        const nuevoVale = {
-          ...valeData,
-          id: valesActuales.length + 1,
-          creado_en: new Date().toISOString()
-        };
-        valesActuales.push(nuevoVale);
-        localStorage.setItem('vales', JSON.stringify(valesActuales));
-        console.log('Vale guardado localmente:', nuevoVale);
-        
-        // Limpiar el formulario después de guardar
-        setLocalRecibe('');
-        setPersonaResponsable('');
-        setItems([{ descripcion: '' }]);
-        alert('Vale guardado exitosamente');
-        return;
-      } catch (localError) {
-        console.error('Error al guardar localmente, intentando API:', localError);
-        // Continuar con el intento de API si falla el guardado local
-      }
-
-      // Enviar los datos al backend si está configurado
-      const backendUrl = process.env.REACT_APP_API_URL;
-      if (backendUrl) {
-        try {
-          await axios.post(`${backendUrl}/api/vales`, valeData);
-          // Limpiar el formulario después de guardar
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/vales`, valeData);
+        if (response.data && response.data.success) {
+          // Limpiar el formulario
           setLocalRecibe('');
           setPersonaResponsable('');
           setItems([{ descripcion: '' }]);
-          alert('Vale guardado exitosamente');
-        } catch (apiError) {
-          console.error('Error al guardar en API:', apiError);
-          throw apiError; // Re-lanzar para el manejo general
+          alert('Vale guardado con éxito');
+        } else {
+          throw new Error('Respuesta de API vacía');
         }
-      } else {
-        // Si no hay backend, simular guardado exitoso
-        console.log('Simulando guardado de vale:', valeData);
-        // Limpiar el formulario después de guardar
-        setLocalRecibe('');
-        setPersonaResponsable('');
-        setItems([{ descripcion: '' }]);
-        alert('Vale guardado exitosamente (modo simulación)');
+      } catch (apiError) {
+        console.log('Error al guardar en API, usando localStorage', apiError);
+        
+        // Fallback a localStorage
+        const localStorageService = await import('../services/LocalStorageService').then(module => module.default);
+        const result = localStorageService.crearVale(valeData);
+        
+        if (result.success) {
+          // Limpiar el formulario
+          setLocalRecibe('');
+          setPersonaResponsable('');
+          setItems([{ descripcion: '' }]);
+          alert('Vale guardado con éxito');
+        } else {
+          throw new Error(result.message || 'Error al guardar el vale');
+        }
       }
+
+      setLoading(false);
     } catch (error) {
       console.error('Error al guardar el vale:', error);
       setError('Error al guardar el vale. Por favor intente nuevamente.');
-    } finally {
       setLoading(false);
     }
   };
 
-  // Renderizado del formulario
   return (
     <div className="container mt-4">
       <div className="card">
         <div className="card-header bg-primary text-white">
-          <h4>Crear Nuevo Vale de Préstamo</h4>
+          <h4 className="mb-0">Crear Nuevo Vale de Préstamo</h4>
         </div>
         <div className="card-body">
-          {error && <div className="alert alert-danger">{error}</div>}
+          {error && (
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          )}
           <form>
-            {/* Campos de fecha y local que presta */}
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="fecha" className="form-label">Fecha</label>
-                <input
-                  type="date"
-                  className="form-control"
-                  id="fecha"
-                  value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
-                />
+                <div className="mb-3">
+                  <label htmlFor="fecha" className="form-label">Fecha</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    id="fecha"
+                    value={fecha}
+                    onChange={(e) => setFecha(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="col-md-6">
-                <label htmlFor="localPresta" className="form-label">Local que presta</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="localPresta"
-                  value={localPresta}
-                  readOnly
-                />
+                <div className="mb-3">
+                  <label htmlFor="localPresta" className="form-label">Local que presta</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="localPresta"
+                    value={localPresta}
+                    readOnly
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Campo de local que recibe */}
             <div className="row mb-3">
               <div className="col-md-6">
-                <label htmlFor="localRecibe" className="form-label">Local que recibe</label>
-                <select
-                  className="form-select"
-                  id="localRecibe"
-                  value={localRecibe}
-                  onChange={(e) => setLocalRecibe(e.target.value)}
-                >
-                  <option value="">Seleccione un local</option>
-                  {locales
-                    .filter(local => local.nombre !== localPresta) // Filtrar el local actual
-                    .map(local => (
-                      <option key={local.id} value={local.id}>
-                        {local.nombre}
-                      </option>
-                    ))}
-                  {/* Asegurarse de que siempre haya al menos una opción si el filtrado elimina todas */}
-                  {locales.filter(local => local.nombre !== localPresta).length === 0 && (
-                    <>
-                      <option value="2">Local 2</option>
-                      <option value="3">Local 3</option>
-                      <option value="4">Local 4</option>
-                      <option value="5">Local 5</option>
-                      <option value="6">Local 6</option>
-                    </>
-                  )}
-                </select>
+                <div className="mb-3">
+                  <label htmlFor="localRecibe" className="form-label">Local que recibe</label>
+                  <select
+                    className="form-select"
+                    id="localRecibe"
+                    value={localRecibe}
+                    onChange={(e) => setLocalRecibe(e.target.value)}
+                  >
+                    <option value="">Seleccione un local</option>
+                    {locales
+                      .filter(local => local.nombre !== localPresta)
+                      .map(local => (
+                        <option key={local.id} value={local.id}>
+                          {local.nombre}
+                        </option>
+                      ))}
+                  </select>
+                </div>
               </div>
               <div className="col-md-6">
-                <label htmlFor="personaResponsable" className="form-label">Persona responsable</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  id="personaResponsable"
-                  placeholder="Nombre de quien lleva la mercadería"
-                  value={personaResponsable}
-                  onChange={(e) => setPersonaResponsable(e.target.value)}
-                />
+                <div className="mb-3">
+                  <label htmlFor="personaResponsable" className="form-label">Persona responsable</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    id="personaResponsable"
+                    placeholder="Nombre de quien lleva la mercadería"
+                    value={personaResponsable}
+                    onChange={(e) => setPersonaResponsable(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Sección de mercadería */}
             <div className="card mb-3">
               <div className="card-header d-flex justify-content-between align-items-center">
                 <h5 className="mb-0">Mercadería prestada</h5>
                 <button
                   type="button"
-                  className="btn btn-success btn-sm"
-                  onClick={() => setItems([...items, { descripcion: '' }])}
+                  className="btn btn-success"
+                  onClick={agregarItem}
                 >
                   + Agregar Item
                 </button>
               </div>
               <div className="card-body">
                 {items.map((item, index) => (
-                  <div key={index} className="row mb-2">
-                    <div className="col-10">
+                  <div key={index} className="mb-3">
+                    <div className="input-group">
                       <input
                         type="text"
                         className="form-control"
                         placeholder="Descripción del item"
                         value={item.descripcion}
-                        onChange={(e) => {
-                          const newItems = [...items];
-                          newItems[index].descripcion = e.target.value;
-                          setItems(newItems);
-                        }}
+                        onChange={(e) => actualizarItem(index, e.target.value)}
                       />
-                    </div>
-                    <div className="col-2">
                       <button
                         type="button"
                         className="btn btn-danger"
