@@ -31,18 +31,18 @@ const Historial = () => {
         if (valesResponse.success) {
           setVales(valesResponse.vales);
         }
-        
+
         // Obtener locales
         const localesResponse = await axios.get('/api/usuarios');
         if (localesResponse.data.success) {
           setLocales(localesResponse.data.usuarios);
         }
-        
+
         setError(null);
       } catch (error) {
         console.error('Error al cargar datos:', error);
         setError('Error al cargar el historial de vales');
-        
+
         // Datos de respaldo para desarrollo/demostración
         setVales([
           {
@@ -64,7 +64,7 @@ const Historial = () => {
             estado: 'pagado'
           }
         ]);
-        
+
         setLocales([
           { id: 1, nombre: 'Local 1' },
           { id: 2, nombre: 'Local 2' },
@@ -94,12 +94,12 @@ const Historial = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      
+
       // Eliminar filtros vacíos
       const filtrosValidos = Object.fromEntries(
         Object.entries(filtros).filter(([_, value]) => value !== '')
       );
-      
+
       const response = await valesService.buscarVales(filtrosValidos);
       if (response.success) {
         setVales(response.vales);
@@ -125,7 +125,7 @@ const Historial = () => {
       mercaderia: '',
       estado: ''
     });
-    
+
     try {
       setLoading(true);
       const response = await valesService.obtenerVales();
@@ -154,7 +154,7 @@ const Historial = () => {
           vale.id === valeId ? { ...vale, estado: 'pagado' } : vale
         );
         setVales(nuevosVales);
-        
+
         // Mostrar mensaje de éxito
         setMensajeExito('Vale marcado como pagado correctamente');
         setTimeout(() => setMensajeExito(null), 3000);
@@ -180,7 +180,7 @@ const Historial = () => {
   // Verificar si el usuario actual puede marcar un vale como pagado
   const puedeMarcarComoPagado = (vale) => {
     // Solo el local que prestó puede marcar como pagado
-    return user && user.local === vale.localPresta && vale.estado === 'pendiente';
+    return user && user.nombre === vale.localPresta && vale.estado === 'pendiente';
   };
 
   return (
@@ -199,7 +199,7 @@ const Historial = () => {
         <Card.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           {mensajeExito && <Alert variant="success">{mensajeExito}</Alert>}
-          
+
           <div className="filtros-container">
             <h5 className="mb-3">Filtros</h5>
             <Form onSubmit={aplicarFiltros}>
@@ -270,7 +270,7 @@ const Historial = () => {
                       name="mercaderia" 
                       value={filtros.mercaderia} 
                       onChange={handleFiltroChange} 
-                      placeholder="Buscar por tipo de mercadería" 
+                      placeholder="Buscar por tipo de mercadería"
                     />
                   </Form.Group>
                 </Col>
@@ -289,91 +289,84 @@ const Historial = () => {
                   </Form.Group>
                 </Col>
                 <Col md={4} className="mb-3 d-flex align-items-end">
-                  <div className="d-grid gap-2 w-100">
-                    <Button 
-                      variant="primary" 
-                      type="submit" 
-                      disabled={loading}
-                    >
-                      Aplicar Filtros
-                    </Button>
-                    <Button 
-                      variant="secondary" 
-                      type="button" 
-                      onClick={limpiarFiltros} 
-                      disabled={loading}
-                    >
-                      Limpiar Filtros
-                    </Button>
-                  </div>
+                  <Button 
+                    type="submit" 
+                    variant="primary" 
+                    className="me-2" 
+                    disabled={loading}
+                  >
+                    Aplicar Filtros
+                  </Button>
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={limpiarFiltros} 
+                    disabled={loading}
+                  >
+                    Limpiar Filtros
+                  </Button>
                 </Col>
               </Row>
             </Form>
           </div>
-          
+
           {loading ? (
-            <div className="text-center p-5">
+            <div className="text-center my-4">
               <Spinner animation="border" variant="primary" />
-              <p className="mt-2">Cargando vales...</p>
+              <p className="mt-2">Cargando datos...</p>
             </div>
           ) : vales.length === 0 ? (
             <Alert variant="info">No se encontraron vales con los criterios seleccionados.</Alert>
           ) : (
-            <div className="table-responsive">
-              <Table striped bordered hover className="mt-4">
-                <thead>
-                  <tr>
-                    <th>Fecha</th>
-                    <th>Local que presta</th>
-                    <th>Local que recibe</th>
-                    <th>Persona responsable</th>
-                    <th>Mercadería</th>
-                    <th>Estado</th>
-                    <th>Acciones</th>
+            <Table responsive striped bordered hover className="mt-4">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Local que presta</th>
+                  <th>Local que recibe</th>
+                  <th>Persona responsable</th>
+                  <th>Mercadería</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vales.map(vale => (
+                  <tr key={vale.id}>
+                    <td>{vale.fecha}</td>
+                    <td>{vale.origen_nombre || vale.localPresta}</td>
+                    <td>{vale.destino_nombre || vale.localRecibe}</td>
+                    <td>{vale.persona_responsable}</td>
+                    <td>
+                      <ul className="mb-0">
+                        {vale.items.map((item, index) => (
+                          <li key={index}>{item.descripcion}</li>
+                        ))}
+                      </ul>
+                    </td>
+                    <td>
+                      <Badge bg={vale.estado === 'pendiente' ? 'warning' : 'success'}>
+                        {vale.estado === 'pendiente' ? 'Pendiente' : 'Pagado'}
+                      </Badge>
+                    </td>
+                    <td>
+                      {puedeMarcarComoPagado(vale) ? (
+                        <Button 
+                          variant="success" 
+                          size="sm" 
+                          onClick={() => marcarComoPagado(vale.id)}
+                          disabled={loading}
+                        >
+                          Marcar como pagado
+                        </Button>
+                      ) : (
+                        vale.estado === 'pagado' && 'Vale pagado'
+                      )}
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {vales.map(vale => (
-                    <tr key={vale.id}>
-                      <td>{vale.fecha}</td>
-                      <td>{vale.localPresta}</td>
-                      <td>{vale.localRecibe}</td>
-                      <td>{vale.personaResponsable}</td>
-                      <td>
-                        <ul className="mb-0 ps-3">
-                          {vale.items.map((item, index) => (
-                            <li key={index}>{item.descripcion}</li>
-                          ))}
-                        </ul>
-                      </td>
-                      <td>
-                        <Badge bg={vale.estado === 'pendiente' ? 'warning' : 'success'}>
-                          {vale.estado === 'pendiente' ? 'Pendiente' : 'Pagado'}
-                        </Badge>
-                      </td>
-                      <td>
-                        {puedeMarcarComoPagado(vale) ? (
-                          <Button 
-                            variant="success" 
-                            size="sm" 
-                            onClick={() => marcarComoPagado(vale.id)}
-                            disabled={loading}
-                          >
-                            Marcar como pagado
-                          </Button>
-                        ) : (
-                          <span className="text-muted">
-                            {vale.estado === 'pagado' ? 
-                              'Vale pagado' : 
-                              'No autorizado para cambiar estado'}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
+                ))}
+              </tbody>
+            </Table>
           )}
         </Card.Body>
       </Card>
