@@ -13,6 +13,13 @@ const CrearVale = () => {
   const [error, setError] = useState('');
   const { user } = useAuth();
 
+// Establecer el local actual basado en el usuario
+if (user) {
+  setLocalPresta(user.nombre); // Usar user.nombre en lugar de user.local
+} else {
+  setLocalPresta('Local 1');
+}
+  
   // Cargar la lista de locales al montar el componente
   useEffect(() => {
     const cargarLocales = async () => {
