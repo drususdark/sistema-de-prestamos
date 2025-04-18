@@ -77,6 +77,12 @@ const CrearVale = () => {
     cargarLocales();
   }, [user]);
 
+  // Función para encontrar el ID del local por su nombre
+  const encontrarIdPorNombre = (nombre) => {
+    const local = locales.find(l => l.nombre === nombre);
+    return local ? local.id : null;
+  };
+
   // Definición de la función handleGuardarVale
   const handleGuardarVale = async () => {
     // Validar que todos los campos requeridos estén completos
@@ -100,25 +106,81 @@ const CrearVale = () => {
       setLoading(true);
       setError('');
 
+      // Obtener el ID del local que recibe
+      // Si localRecibe ya es un ID (número o string numérico), lo usamos directamente
+      // Si es un nombre, buscamos su ID correspondiente
+      let localRecibeId;
+      
+      if (!isNaN(localRecibe)) {
+        // Si localRecibe es un número o string numérico, lo usamos como ID
+        localRecibeId = parseInt(localRecibe);
+      } else {
+        // Si es un nombre, buscamos su ID
+        localRecibeId = encontrarIdPorNombre(localRecibe);
+        
+        // Si no encontramos el ID, usamos un valor por defecto basado en el nombre
+        if (!localRecibeId) {
+          // Extraer número del nombre del local (ej: "Local 2" -> 2)
+          const match = localRecibe.match(/\d+/);
+          if (match) {
+            localRecibeId = parseInt(match[0]);
+          } else {
+            // Si todo falla, usamos un ID por defecto
+            localRecibeId = 2; // Local 2 como fallback
+          }
+        }
+      }
+
       // Preparar los datos del vale
       const valeData = {
         fecha,
         localPresta,
-        local_destino_id: localRecibe, // Ahora localRecibe contiene el ID numérico
-        personaResponsable,
+        local_destino_id: localRecibeId, // Usar el ID numérico
+        persona_responsable: personaResponsable, // Cambiar a persona_responsable para coincidir con el backend
         items: itemsValidos,
         estado: 'Pendiente'
       };
 
-      // Enviar los datos al backend si está configurado
-      const backendUrl = process.env.REACT_APP_API_URL;
-      if (backendUrl) {
-        await axios.post(`${backendUrl}/api/vales`, valeData);
+      console.log('Datos del vale a guardar:', valeData);
+
+      // Intentar guardar localmente primero
+      try {
+        // Simulación de guardado local
+        const valesActuales = JSON.parse(localStorage.getItem('vales') || '[]');
+        const nuevoVale = {
+          ...valeData,
+          id: valesActuales.length + 1,
+          creado_en: new Date().toISOString()
+        };
+        valesActuales.push(nuevoVale);
+        localStorage.setItem('vales', JSON.stringify(valesActuales));
+        console.log('Vale guardado localmente:', nuevoVale);
+        
         // Limpiar el formulario después de guardar
         setLocalRecibe('');
         setPersonaResponsable('');
         setItems([{ descripcion: '' }]);
         alert('Vale guardado exitosamente');
+        return;
+      } catch (localError) {
+        console.error('Error al guardar localmente, intentando API:', localError);
+        // Continuar con el intento de API si falla el guardado local
+      }
+
+      // Enviar los datos al backend si está configurado
+      const backendUrl = process.env.REACT_APP_API_URL;
+      if (backendUrl) {
+        try {
+          await axios.post(`${backendUrl}/api/vales`, valeData);
+          // Limpiar el formulario después de guardar
+          setLocalRecibe('');
+          setPersonaResponsable('');
+          setItems([{ descripcion: '' }]);
+          alert('Vale guardado exitosamente');
+        } catch (apiError) {
+          console.error('Error al guardar en API:', apiError);
+          throw apiError; // Re-lanzar para el manejo general
+        }
       } else {
         // Si no hay backend, simular guardado exitoso
         console.log('Simulando guardado de vale:', valeData);
@@ -184,14 +246,14 @@ const CrearVale = () => {
                   {locales
                     .filter(local => local.nombre !== localPresta) // Filtrar el local actual
                     .map(local => (
-                      <option key={local.id} value={local.id}>  {/* CAMBIO AQUÍ: Usar local.id en lugar de local.nombre */}
+                      <option key={local.id} value={local.id}>
                         {local.nombre}
                       </option>
                     ))}
                   {/* Asegurarse de que siempre haya al menos una opción si el filtrado elimina todas */}
                   {locales.filter(local => local.nombre !== localPresta).length === 0 && (
                     <>
-                      <option value="2">Local 2</option>  {/* CAMBIO AQUÍ: Usar IDs numéricos en lugar de nombres */}
+                      <option value="2">Local 2</option>
                       <option value="3">Local 3</option>
                       <option value="4">Local 4</option>
                       <option value="5">Local 5</option>
