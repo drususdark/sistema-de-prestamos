@@ -1,13 +1,52 @@
 // Servicio para manejar el almacenamiento local
 const LocalStorageService = {
+  // Iniciar sesión
+  login(usuario, password) {
+    try {
+      // Obtener usuarios del localStorage
+      const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+      
+      // Buscar usuario por nombre de usuario y contraseña
+      const user = usuarios.find(u => 
+        u.usuario.toLowerCase() === usuario.toLowerCase() && 
+        u.password === password
+      );
+      
+      if (!user) {
+        return { success: false, message: 'Credenciales inválidas' };
+      }
+      
+      // Guardar información de sesión
+      localStorage.setItem('token', 'token-' + Date.now());
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
+      return { success: true, user };
+    } catch (error) {
+      console.error('Error al iniciar sesión:', error);
+      return { success: false, message: 'Error al iniciar sesión' };
+    }
+  },
+  
+  // Cerrar sesión
+  logout() {
+    try {
+      localStorage.removeItem('token');
+      localStorage.removeItem('currentUser');
+      return { success: true };
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      return { success: false, message: 'Error al cerrar sesión' };
+    }
+  },
+  
   // Verificar token de autenticación
   verificarToken() {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return { success: false, message: 'No autorizado' };
-    }
-    
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return { success: false, message: 'No autorizado' };
+      }
+      
       const user = JSON.parse(localStorage.getItem('currentUser'));
       if (!user) {
         return { success: false, message: 'Usuario no encontrado' };
@@ -143,10 +182,10 @@ const LocalStorageService = {
     }
     
     // Obtener datos
-    const vales = JSON.parse(localStorage.getItem('vales'));
-    const usuarios = JSON.parse(localStorage.getItem('usuarios'));
-    let nextValeId = parseInt(localStorage.getItem('nextValeId'));
-    let nextItemId = parseInt(localStorage.getItem('nextItemId'));
+    const vales = JSON.parse(localStorage.getItem('vales')) || [];
+    const usuarios = JSON.parse(localStorage.getItem('usuarios')) || [];
+    let nextValeId = parseInt(localStorage.getItem('nextValeId') || '1');
+    let nextItemId = parseInt(localStorage.getItem('nextItemId') || '1');
     
     // Obtener nombres de locales
     const localOrigen = usuarios.find(u => u.id === auth.user.id);
@@ -185,7 +224,51 @@ const LocalStorageService = {
       success: true,
       vale: nuevoVale
     };
+  },
+  
+  // Inicializar datos de prueba si no existen
+  initializeTestData() {
+    try {
+      // Verificar si ya hay datos
+      if (!localStorage.getItem('usuarios')) {
+        // Crear usuarios de prueba
+        const usuarios = [
+          { id: 1, nombre: 'Local 1', usuario: 'local1', password: 'local1' },
+          { id: 2, nombre: 'Local 2', usuario: 'local2', password: 'local2' },
+          { id: 3, nombre: 'Local 3', usuario: 'local3', password: 'local3' },
+          { id: 4, nombre: 'Local 4', usuario: 'local4', password: 'local4' },
+          { id: 5, nombre: 'Local 5', usuario: 'local5', password: 'local5' },
+          { id: 6, nombre: 'Local 6', usuario: 'local6', password: 'local6' }
+        ];
+        localStorage.setItem('usuarios', JSON.stringify(usuarios));
+      }
+      
+      if (!localStorage.getItem('vales')) {
+        // Crear vales vacíos
+        localStorage.setItem('vales', JSON.stringify([]));
+      }
+      
+      if (!localStorage.getItem('nextValeId')) {
+        localStorage.setItem('nextValeId', '1');
+      }
+      
+      if (!localStorage.getItem('nextItemId')) {
+        localStorage.setItem('nextItemId', '1');
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error al inicializar datos de prueba:', error);
+      return { success: false, message: 'Error al inicializar datos' };
+    }
   }
 };
+
+// Inicializar datos de prueba al cargar
+try {
+  LocalStorageService.initializeTestData();
+} catch (e) {
+  console.error('Error al inicializar datos:', e);
+}
 
 export default LocalStorageService;
