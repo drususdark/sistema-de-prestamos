@@ -32,48 +32,34 @@ const Historial = () => {
           setVales(valesResponse.vales);
         }
 
-        // Obtener locales
-        const localesResponse = await axios.get('/api/usuarios');
-        if (localesResponse.data.success) {
-          setLocales(localesResponse.data.usuarios);
-        }
-
-        setError(null);
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-        setError('Error al cargar el historial de vales');
-
-        // Datos de respaldo para desarrollo/demostración
-        setVales([
-          {
-            id: 1,
-            fecha: '2025-04-15',
-            localPresta: 'Local 1',
-            localRecibe: 'Local 2',
-            personaResponsable: 'Juan Pérez',
-            items: [{ descripcion: 'Producto 1' }, { descripcion: 'Producto 2' }],
-            estado: 'pendiente'
-          },
-          {
-            id: 2,
-            fecha: '2025-04-14',
-            localPresta: 'Local 3',
-            localRecibe: 'Local 1',
-            personaResponsable: 'María López',
-            items: [{ descripcion: 'Producto 3' }],
-            estado: 'pagado'
-          }
-        ]);
-
-        setLocales([
+        // Datos locales de respaldo
+        const datosLocales = [
           { id: 1, nombre: 'Local 1' },
           { id: 2, nombre: 'Local 2' },
           { id: 3, nombre: 'Local 3' },
           { id: 4, nombre: 'Local 4' },
           { id: 5, nombre: 'Local 5' },
           { id: 6, nombre: 'Local 6' }
-        ]);
-      } finally {
+        ];
+
+        // Verificar si la URL de la API está disponible
+        try {
+          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/locales`);
+          if (response.data && response.data.success) {
+            setLocales(response.data.locales);
+          } else {
+            console.log('Respuesta de API vacía, usando datos locales');
+            setLocales(datosLocales);
+          }
+        } catch (error) {
+          console.log('Error al obtener locales de la API, usando datos locales', error);
+          setLocales(datosLocales);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+        setError('Error al cargar los datos. Por favor, recargue la página.');
         setLoading(false);
       }
     };
@@ -83,34 +69,30 @@ const Historial = () => {
 
   // Manejar cambios en los filtros
   const handleFiltroChange = (e) => {
+    const { name, value } = e.target;
     setFiltros({
       ...filtros,
-      [e.target.name]: e.target.value
+      [name]: value
     });
   };
 
   // Aplicar filtros
-  const aplicarFiltros = async (e) => {
-    e.preventDefault();
+  const aplicarFiltros = async () => {
     try {
       setLoading(true);
-
-      // Eliminar filtros vacíos
-      const filtrosValidos = Object.fromEntries(
-        Object.entries(filtros).filter(([_, value]) => value !== '')
-      );
-
-      const response = await valesService.buscarVales(filtrosValidos);
+      setError(null);
+      
+      const response = await valesService.buscarVales(filtros);
       if (response.success) {
         setVales(response.vales);
-        setError(null);
       } else {
-        setError(response.message || 'Error al buscar vales');
+        setError('Error al aplicar filtros');
       }
+      
+      setLoading(false);
     } catch (error) {
       console.error('Error al aplicar filtros:', error);
-      setError(error.response?.data?.message || 'Error al buscar vales');
-    } finally {
+      setError('Error al aplicar filtros. Por favor, intente nuevamente.');
       setLoading(false);
     }
   };
@@ -125,21 +107,33 @@ const Historial = () => {
       mercaderia: '',
       estado: ''
     });
-
+    
     try {
       setLoading(true);
+      setError(null);
+      
       const response = await valesService.obtenerVales();
       if (response.success) {
         setVales(response.vales);
-        setError(null);
       } else {
-        setError(response.message || 'Error al obtener vales');
+        setError('Error al limpiar filtros');
       }
+      
+      setLoading(false);
     } catch (error) {
       console.error('Error al limpiar filtros:', error);
-      setError(error.response?.data?.message || 'Error al obtener vales');
-    } finally {
+      setError('Error al limpiar filtros. Por favor, intente nuevamente.');
       setLoading(false);
+    }
+  };
+
+  // Exportar vales a CSV
+  const exportarVales = () => {
+    try {
+      valesService.exportarVales();
+    } catch (error) {
+      console.error('Error al exportar vales:', error);
+      setError('Error al exportar vales. Por favor, intente nuevamente.');
     }
   };
 
@@ -147,91 +141,92 @@ const Historial = () => {
   const marcarComoPagado = async (valeId) => {
     try {
       setLoading(true);
+      setError(null);
+      setMensajeExito(null);
+      
       const response = await valesService.marcarComoPagado(valeId);
       if (response.success) {
         // Actualizar la lista de vales
-        const nuevosVales = vales.map(vale => 
+        const valesActualizados = vales.map(vale => 
           vale.id === valeId ? { ...vale, estado: 'pagado' } : vale
         );
-        setVales(nuevosVales);
-
-        // Mostrar mensaje de éxito
-        setMensajeExito('Vale marcado como pagado correctamente');
-        setTimeout(() => setMensajeExito(null), 3000);
+        setVales(valesActualizados);
+        setMensajeExito('Vale marcado como pagado exitosamente');
+      } else {
+        setError('Error al marcar vale como pagado');
       }
+      
+      setLoading(false);
     } catch (error) {
-      setError(error.response?.data?.message || 'Error al marcar vale como pagado');
-    } finally {
+      console.error('Error al marcar vale como pagado:', error);
+      setError('Error al marcar vale como pagado. Por favor, intente nuevamente.');
       setLoading(false);
     }
   };
 
-  // Exportar a CSV
-  const exportarCSV = () => {
-    valesService.exportarVales();
-  };
-
-  // Obtener nombre de local por ID
-  const getNombreLocal = (id) => {
-    const local = locales.find(local => local.id === id);
-    return local ? local.nombre : 'Desconocido';
-  };
-
-  // Verificar si el usuario actual puede marcar un vale como pagado
+  // Verificar si el usuario puede marcar un vale como pagado
   const puedeMarcarComoPagado = (vale) => {
-    // Solo el local que prestó puede marcar como pagado
-    return user && user.nombre === vale.localPresta && vale.estado === 'pendiente';
+    // Convertir a minúsculas para evitar problemas de mayúsculas/minúsculas
+    const userLocal = user?.nombre?.toLowerCase();
+    const valeLocal = vale.localPresta?.toLowerCase();
+    const valeEstado = vale.estado?.toLowerCase();
+    
+    // Solo el local que prestó puede marcar como pagado y solo si está pendiente
+    return user && userLocal === valeLocal && valeEstado === 'pendiente';
   };
 
   return (
-    <div className="historial-container">
-      <Card className="mb-4">
+    <div className="container mt-4">
+      <Card>
         <Card.Header className="bg-primary text-white d-flex justify-content-between align-items-center">
           <h4 className="mb-0">Historial de Vales</h4>
-          <Button 
-            variant="outline-light" 
-            size="sm" 
-            onClick={exportarCSV}
-          >
+          <Button variant="light" onClick={exportarVales}>
             Exportar a CSV
           </Button>
         </Card.Header>
         <Card.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
-          {mensajeExito && <Alert variant="success">{mensajeExito}</Alert>}
-
-          <div className="filtros-container">
-            <h5 className="mb-3">Filtros</h5>
-            <Form onSubmit={aplicarFiltros}>
+          {error && (
+            <Alert variant="danger">{error}</Alert>
+          )}
+          
+          {mensajeExito && (
+            <Alert variant="success">{mensajeExito}</Alert>
+          )}
+          
+          <Card className="mb-4">
+            <Card.Header>
+              <h5 className="mb-0">Filtros</h5>
+            </Card.Header>
+            <Card.Body>
               <Row>
-                <Col md={6} lg={3} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={3}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Desde</Form.Label>
-                    <Form.Control 
-                      type="date" 
-                      name="fechaDesde" 
-                      value={filtros.fechaDesde} 
-                      onChange={handleFiltroChange} 
+                    <Form.Control
+                      type="date"
+                      name="fechaDesde"
+                      value={filtros.fechaDesde}
+                      onChange={handleFiltroChange}
                     />
                   </Form.Group>
                 </Col>
-                <Col md={6} lg={3} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={3}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Hasta</Form.Label>
-                    <Form.Control 
-                      type="date" 
-                      name="fechaHasta" 
-                      value={filtros.fechaHasta} 
-                      onChange={handleFiltroChange} 
+                    <Form.Control
+                      type="date"
+                      name="fechaHasta"
+                      value={filtros.fechaHasta}
+                      onChange={handleFiltroChange}
                     />
                   </Form.Group>
                 </Col>
-                <Col md={6} lg={3} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={3}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Local que presta</Form.Label>
-                    <Form.Select 
-                      name="localOrigen" 
-                      value={filtros.localOrigen} 
+                    <Form.Select
+                      name="localOrigen"
+                      value={filtros.localOrigen}
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -243,12 +238,12 @@ const Historial = () => {
                     </Form.Select>
                   </Form.Group>
                 </Col>
-                <Col md={6} lg={3} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={3}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Local que recibe</Form.Label>
-                    <Form.Select 
-                      name="localDestino" 
-                      value={filtros.localDestino} 
+                    <Form.Select
+                      name="localDestino"
+                      value={filtros.localDestino}
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -262,24 +257,24 @@ const Historial = () => {
                 </Col>
               </Row>
               <Row>
-                <Col md={4} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={6}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Mercadería</Form.Label>
-                    <Form.Control 
-                      type="text" 
-                      name="mercaderia" 
-                      value={filtros.mercaderia} 
-                      onChange={handleFiltroChange} 
+                    <Form.Control
+                      type="text"
+                      name="mercaderia"
                       placeholder="Buscar por tipo de mercadería"
+                      value={filtros.mercaderia}
+                      onChange={handleFiltroChange}
                     />
                   </Form.Group>
                 </Col>
-                <Col md={4} className="mb-3">
-                  <Form.Group>
+                <Col md={6} lg={6}>
+                  <Form.Group className="mb-3">
                     <Form.Label>Estado</Form.Label>
-                    <Form.Select 
-                      name="estado" 
-                      value={filtros.estado} 
+                    <Form.Select
+                      name="estado"
+                      value={filtros.estado}
                       onChange={handleFiltroChange}
                     >
                       <option value="">Todos</option>
@@ -288,37 +283,26 @@ const Historial = () => {
                     </Form.Select>
                   </Form.Group>
                 </Col>
-                <Col md={4} className="mb-3 d-flex align-items-end">
-                  <Button 
-                    type="submit" 
-                    variant="primary" 
-                    className="me-2" 
-                    disabled={loading}
-                  >
-                    Aplicar Filtros
-                  </Button>
-                  <Button 
-                    type="button" 
-                    variant="secondary" 
-                    onClick={limpiarFiltros} 
-                    disabled={loading}
-                  >
-                    Limpiar Filtros
-                  </Button>
-                </Col>
               </Row>
-            </Form>
-          </div>
-
+              <div className="d-flex gap-2">
+                <Button variant="primary" onClick={aplicarFiltros}>
+                  Aplicar Filtros
+                </Button>
+                <Button variant="secondary" onClick={limpiarFiltros}>
+                  Limpiar Filtros
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+          
           {loading ? (
             <div className="text-center my-4">
-              <Spinner animation="border" variant="primary" />
-              <p className="mt-2">Cargando datos...</p>
+              <Spinner animation="border" role="status">
+                <span className="visually-hidden">Cargando...</span>
+              </Spinner>
             </div>
-          ) : vales.length === 0 ? (
-            <Alert variant="info">No se encontraron vales con los criterios seleccionados.</Alert>
           ) : (
-            <Table responsive striped bordered hover className="mt-4">
+            <Table striped bordered hover responsive>
               <thead>
                 <tr>
                   <th>Fecha</th>
@@ -334,9 +318,9 @@ const Historial = () => {
                 {vales.map(vale => (
                   <tr key={vale.id}>
                     <td>{vale.fecha}</td>
-                    <td>{vale.origen_nombre || vale.localPresta}</td>
-                    <td>{vale.destino_nombre || vale.localRecibe}</td>
-                    <td>{vale.persona_responsable}</td>
+                    <td>{vale.localPresta}</td>
+                    <td>{vale.localRecibe}</td>
+                    <td>{vale.personaResponsable}</td>
                     <td>
                       <ul className="mb-0">
                         {vale.items.map((item, index) => (
@@ -345,8 +329,8 @@ const Historial = () => {
                       </ul>
                     </td>
                     <td>
-                      <Badge bg={vale.estado === 'pendiente' ? 'warning' : 'success'}>
-                        {vale.estado === 'pendiente' ? 'Pendiente' : 'Pagado'}
+                      <Badge bg={vale.estado.toLowerCase() === 'pendiente' ? 'warning' : 'success'}>
+                        {vale.estado.charAt(0).toUpperCase() + vale.estado.slice(1)}
                       </Badge>
                     </td>
                     <td>
@@ -360,7 +344,7 @@ const Historial = () => {
                           Marcar como pagado
                         </Button>
                       ) : (
-                        vale.estado === 'pagado' && 'Vale pagado'
+                        vale.estado.toLowerCase() === 'pagado' && 'Vale pagado'
                       )}
                     </td>
                   </tr>
