@@ -1,11 +1,11 @@
-import LocalStorageService from '../services/LocalStorageService';
+import ApiService from '../services/ApiService';
 
-// Servicio para interactuar con los usuarios (ahora usando localStorage)
+// Servicio para interactuar con los usuarios (usando API en lugar de localStorage)
 const usuariosService = {
   // Obtener todos los usuarios/locales
   obtenerUsuarios: async () => {
     try {
-      const response = LocalStorageService.getUsuarios();
+      const response = await ApiService.getUsuarios();
       return response;
     } catch (error) {
       console.error('Error al obtener usuarios:', error);
@@ -14,9 +14,9 @@ const usuariosService = {
   },
 
   // Obtener usuario actual
-  obtenerUsuarioActual: () => {
+  obtenerUsuarioActual: async () => {
     try {
-      return LocalStorageService.getUsuarioActual();
+      return await ApiService.getUsuarioActual();
     } catch (error) {
       console.error('Error al obtener usuario actual:', error);
       return null;
