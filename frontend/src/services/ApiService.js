@@ -1,5 +1,5 @@
 // Servicio para interactuar con la API del backend
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:10000/api';
+const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com/api';
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
