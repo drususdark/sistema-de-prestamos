@@ -28,8 +28,11 @@ const Historial = () => {
         
         // Obtener vales
         const valesResponse = await valesService.obtenerVales();
+        console.log('Respuesta de vales:', valesResponse);
         if (valesResponse.success) {
           setVales(valesResponse.vales);
+        } else {
+          console.error('Error al obtener vales:', valesResponse.message);
         }
 
         // Datos locales de respaldo
@@ -45,7 +48,8 @@ const Historial = () => {
         // Verificar si la URL de la API está disponible
         try {
           // Usar la URL de la API desde el archivo .env.production
-          const apiUrl = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com';
+          const apiUrl = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com/api';
+          console.log('Intentando obtener locales desde:', `${apiUrl}/locales`);
           const response = await axios.get(`${apiUrl}/locales`);
           if (response.data && response.data.success) {
             setLocales(response.data.locales);
