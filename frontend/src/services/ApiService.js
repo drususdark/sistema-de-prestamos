@@ -1,5 +1,6 @@
 // Servicio para interactuar con la API del backend
-const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com/api';
+// IMPORTANTE: URL HARDCODEADA para evitar problemas con variables de entorno
+const API_URL = 'https://sistema-de-prestamos-zeqj.onrender.com/api';
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
@@ -26,11 +27,14 @@ const ApiService = {
     };
   },
 
-  // Iniciar sesión
+  // Iniciar sesión - IMPLEMENTACIÓN DIRECTA SIN VARIABLES
   async login(usuario, password) {
     try {
-      console.log(`Intentando iniciar sesión en: ${API_URL}/auth/login`);
-      const response = await fetch(`${API_URL}/auth/login`, {
+      // URL HARDCODEADA para evitar problemas
+      const loginUrl = 'https://sistema-de-prestamos-zeqj.onrender.com/api/auth/login';
+      console.log(`Intentando iniciar sesión en URL hardcodeada: ${loginUrl}`);
+      
+      const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -87,8 +91,12 @@ const ApiService = {
         return { success: true, user: JSON.parse(cachedUser) };
       }
       
+      // URL HARDCODEADA para evitar problemas
+      const userUrl = 'https://sistema-de-prestamos-zeqj.onrender.com/api/auth/user';
+      console.log(`Verificando token en URL hardcodeada: ${userUrl}`);
+      
       // Si no hay usuario en caché, verificar con el servidor
-      const response = await fetch(`${API_URL}/auth/user`, {
+      const response = await fetch(userUrl, {
         headers: this.getAuthHeaders()
       });
       
