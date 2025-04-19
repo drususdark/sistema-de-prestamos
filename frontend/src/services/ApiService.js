@@ -1,5 +1,5 @@
 // Servicio para interactuar con la API del backend
-const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com/api';
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
@@ -29,6 +29,7 @@ const ApiService = {
   // Iniciar sesión
   async login(usuario, password) {
     try {
+      console.log(`Intentando iniciar sesión en: ${API_URL}/auth/login`);
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: {
@@ -36,6 +37,11 @@ const ApiService = {
         },
         body: JSON.stringify({ usuario, password })
       });
+
+      if (!response.ok) {
+        console.error(`Error de servidor: ${response.status} ${response.statusText}`);
+        return { success: false, message: `Error del servidor: ${response.status}` };
+      }
 
       const data = await response.json();
       
@@ -49,7 +55,7 @@ const ApiService = {
       return data;
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
-      return { success: false, message: 'Error al iniciar sesión' };
+      return { success: false, message: 'Error al iniciar sesión: ' + error.message };
     }
   },
   
