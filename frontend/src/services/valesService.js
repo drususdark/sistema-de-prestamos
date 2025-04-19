@@ -1,11 +1,11 @@
-import LocalStorageService from '../services/LocalStorageService';
+import ApiService from '../services/ApiService';
 
-// Servicio para interactuar con los vales (ahora usando localStorage)
+// Servicio para interactuar con los vales (usando API en lugar de localStorage)
 const valesService = {
   // Crear un nuevo vale
   crearVale: async (valeData) => {
     try {
-      const response = LocalStorageService.crearVale(valeData);
+      const response = await ApiService.crearVale(valeData);
       return response;
     } catch (error) {
       console.error('Error al crear vale:', error);
@@ -16,7 +16,7 @@ const valesService = {
   // Obtener todos los vales
   obtenerVales: async () => {
     try {
-      const response = LocalStorageService.getVales();
+      const response = await ApiService.getVales();
       return response;
     } catch (error) {
       console.error('Error al obtener vales:', error);
@@ -27,7 +27,7 @@ const valesService = {
   // Buscar vales con filtros
   buscarVales: async (filtros) => {
     try {
-      const response = LocalStorageService.buscarVales(filtros);
+      const response = await ApiService.buscarVales(filtros);
       return response;
     } catch (error) {
       console.error('Error al buscar vales:', error);
@@ -38,7 +38,7 @@ const valesService = {
   // Marcar vale como pagado
   marcarComoPagado: async (valeId) => {
     try {
-      const response = LocalStorageService.marcarComoPagado(valeId);
+      const response = await ApiService.marcarComoPagado(valeId);
       return response;
     } catch (error) {
       console.error('Error al marcar vale como pagado:', error);
@@ -47,9 +47,9 @@ const valesService = {
   },
 
   // Exportar vales a CSV
-  exportarVales: () => {
+  exportarVales: async () => {
     try {
-      const response = LocalStorageService.exportarValesCSV();
+      const response = await ApiService.exportarValesCSV();
       if (response.success) {
         // Crear un blob con el contenido CSV
         const blob = new Blob([response.csv], { type: 'text/csv;charset=utf-8;' });
