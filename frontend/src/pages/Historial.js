@@ -45,7 +45,7 @@ const Historial = () => {
         // Verificar si la URL de la API está disponible
         try {
           // Usar la URL de la API desde el archivo .env.production
-          const apiUrl = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com/api';
+          const apiUrl = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com';
           const response = await axios.get(`${apiUrl}/locales`);
           if (response.data && response.data.success) {
             setLocales(response.data.locales);
