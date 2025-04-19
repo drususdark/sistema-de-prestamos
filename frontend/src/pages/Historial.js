@@ -44,7 +44,9 @@ const Historial = () => {
 
         // Verificar si la URL de la API está disponible
         try {
-          const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/locales`);
+          // Usar la URL de la API desde el archivo .env.production
+          const apiUrl = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-zeqj.onrender.com';
+          const response = await axios.get(`${apiUrl}/api/locales`);
           if (response.data && response.data.success) {
             setLocales(response.data.locales);
           } else {
@@ -315,40 +317,46 @@ const Historial = () => {
                 </tr>
               </thead>
               <tbody>
-                {vales.map(vale => (
-                  <tr key={vale.id}>
-                    <td>{vale.fecha}</td>
-                    <td>{vale.localPresta}</td>
-                    <td>{vale.localRecibe}</td>
-                    <td>{vale.personaResponsable}</td>
-                    <td>
-                      <ul className="mb-0">
-                        {vale.items.map((item, index) => (
-                          <li key={index}>{item.descripcion}</li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td>
-                      <Badge bg={vale.estado.toLowerCase() === 'pendiente' ? 'warning' : 'success'}>
-                        {vale.estado.charAt(0).toUpperCase() + vale.estado.slice(1)}
-                      </Badge>
-                    </td>
-                    <td>
-                      {puedeMarcarComoPagado(vale) ? (
-                        <Button 
-                          variant="success" 
-                          size="sm" 
-                          onClick={() => marcarComoPagado(vale.id)}
-                          disabled={loading}
-                        >
-                          Marcar como pagado
-                        </Button>
-                      ) : (
-                        vale.estado.toLowerCase() === 'pagado' && 'Vale pagado'
-                      )}
-                    </td>
+                {vales && vales.length > 0 ? (
+                  vales.map(vale => (
+                    <tr key={vale.id}>
+                      <td>{vale.fecha}</td>
+                      <td>{vale.localPresta}</td>
+                      <td>{vale.localRecibe}</td>
+                      <td>{vale.personaResponsable}</td>
+                      <td>
+                        <ul className="mb-0">
+                          {vale.items && vale.items.map((item, index) => (
+                            <li key={index}>{item.descripcion}</li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td>
+                        <Badge bg={vale.estado.toLowerCase() === 'pendiente' ? 'warning' : 'success'}>
+                          {vale.estado.charAt(0).toUpperCase() + vale.estado.slice(1)}
+                        </Badge>
+                      </td>
+                      <td>
+                        {puedeMarcarComoPagado(vale) ? (
+                          <Button 
+                            variant="success" 
+                            size="sm" 
+                            onClick={() => marcarComoPagado(vale.id)}
+                            disabled={loading}
+                          >
+                            Marcar como pagado
+                          </Button>
+                        ) : (
+                          vale.estado.toLowerCase() === 'pagado' && 'Vale pagado'
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="text-center">No hay vales para mostrar</td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </Table>
           )}
