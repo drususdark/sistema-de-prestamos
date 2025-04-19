@@ -1,4 +1,4 @@
-import ApiService from '../services/ApiService';
+import ApiService from './ApiService';
 
 // Servicio para interactuar con los vales (usando API en lugar de localStorage)
 const valesService = {
