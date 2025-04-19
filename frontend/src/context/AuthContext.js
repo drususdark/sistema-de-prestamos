@@ -1,5 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import LocalStorageService from '../services/LocalStorageService';
+import ApiService from '../services/ApiService';
 
 // Crear contexto
 const AuthContext = createContext();
@@ -15,9 +15,9 @@ export const AuthProvider = ({ children }) => {
 
   // Verificar si hay un usuario autenticado al cargar
   useEffect(() => {
-    const verificarAuth = () => {
+    const verificarAuth = async () => {
       try {
-        const auth = LocalStorageService.verificarToken();
+        const auth = await ApiService.verificarToken();
         if (auth.success) {
           setUser(auth.user);
         } else {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const response = LocalStorageService.login(usuario, password);
+      const response = await ApiService.login(usuario, password);
       
       if (response.success) {
         setUser(response.user);
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
   // Cerrar sesión
   const logout = () => {
     try {
-      LocalStorageService.logout();
+      ApiService.logout();
       setUser(null);
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
