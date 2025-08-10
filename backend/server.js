@@ -2,10 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const path = require('path');
-const { initDb } = require('./database');
+require('dotenv').config();
 
-// Inicializar la base de datos
-initDb();
+// Importar configuración de Supabase
+const { testConnection } = require('./supabase');
+
+// Verificar conexión con Supabase al iniciar
+testConnection();
 
 // Crear la aplicación Express
 const app = express();
