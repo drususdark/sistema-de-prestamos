@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // Clave secreta para JWT
-const JWT_SECRET = process.env.JWT_SECRET || 'clave_secreta_prestamos_app';
+const JWT_SECRET = process.env.JWT_SECRET || '+1RbpzoGxu+jaj6Bax1yytcZ9DZ5kZDOmZl2ncvy8SmxgjumXWL2ERMBX+BoquwEhMSZd3g1dqyRtN7wWOWKiA==';
 
 // Ruta para login
 router.post('/login', async (req, res) => {
