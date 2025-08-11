@@ -44,7 +44,7 @@ const ApiService = {
   async login(usuario, password) {
     try {
       // URL HARDCODEADA para evitar problemas
-      const loginUrl = 'https://sistema-de-prestamos-zeqj.onrender.com/api/auth/login';
+      const loginUrl = 'https://sistema-de-prestamos-jkbk.onrender.com/api/auth/login';
       console.log(`Intentando iniciar sesión en URL: ${loginUrl}`);
       console.log(`Datos de login: usuario=${usuario}, password=****`);
       
@@ -129,7 +129,7 @@ const ApiService = {
       }
       
       // URL HARDCODEADA para evitar problemas
-      const userUrl = 'https://sistema-de-prestamos-zeqj.onrender.com/api/auth/user';
+      const userUrl = 'https://sistema-de-prestamos-jkbk.onrender.com/api/auth/user';
       console.log(`Verificando token en URL: ${userUrl}`);
       
       // Si no hay usuario en caché, verificar con el servidor
