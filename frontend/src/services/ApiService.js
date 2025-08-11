@@ -1,6 +1,6 @@
 // Servicio para interactuar con la API del backend
 // IMPORTANTE: URL HARDCODEADA para evitar problemas con variables de entorno
-const API_URL = 'https://sistema-de-prestamos-zeqj.onrender.com/api';
+const API_URL = 'https://sistema-de-prestamos-jkbk.onrender.com/api';
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
