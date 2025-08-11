@@ -1,6 +1,6 @@
 // Servicio para interactuar con la API del backend
-// IMPORTANTE: URL HARDCODEADA para evitar problemas con variables de entorno
-const API_URL = 'https://sistema-de-prestamos-jkbk.onrender.com/api';
+// Usar variable de entorno o fallback a URL de producción
+const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-jkbk.onrender.com/api';
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
@@ -43,8 +43,8 @@ const ApiService = {
   // Iniciar sesión - IMPLEMENTACIÓN MEJORADA
   async login(usuario, password) {
     try {
-      // URL HARDCODEADA para evitar problemas
-      const loginUrl = 'https://sistema-de-prestamos-jkbk.onrender.com/api/auth/login';
+      // Usar URL de la variable de configuración
+      const loginUrl = `${API_URL}/auth/login`;
       console.log(`Intentando iniciar sesión en URL: ${loginUrl}`);
       console.log(`Datos de login: usuario=${usuario}, password=****`);
       
@@ -128,8 +128,8 @@ const ApiService = {
         return { success: true, user: JSON.parse(cachedUser) };
       }
       
-      // URL HARDCODEADA para evitar problemas
-      const userUrl = 'https://sistema-de-prestamos-jkbk.onrender.com/api/auth/user';
+      // Usar URL de la variable de configuración
+      const userUrl = `${API_URL}/auth/user`;
       console.log(`Verificando token en URL: ${userUrl}`);
       
       // Si no hay usuario en caché, verificar con el servidor
