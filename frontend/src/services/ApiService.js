@@ -1,6 +1,15 @@
 // Servicio para interactuar con la API del backend
-// Usar variable de entorno o fallback a URL de producción
-const API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-jkbk.onrender.com/api';
+// URL AUTOCONFIGURADA - Maneja URLs con y sin /api automáticamente
+let API_URL = process.env.REACT_APP_API_URL || 'https://sistema-de-prestamos-jkbk.onrender.com';
+
+// Auto-corregir URL si no termina en /api
+if (!API_URL.endsWith('/api')) {
+  API_URL += '/api';
+}
+
+// DEBUG: Verificar configuración
+console.log('🔧 Variable de entorno original:', process.env.REACT_APP_API_URL);
+console.log('🔧 URL final de API:', API_URL);
 
 // Servicio para interactuar con la API del backend
 const ApiService = {
