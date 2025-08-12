@@ -1,19 +1,38 @@
 const { supabase } = require('./supabase');
 const bcrypt = require('bcrypt');
 
-// Datos de los 6 locales iniciales
+// ✅ SEGURO: Datos de los locales SIN contraseñas hardcodeadas
 const localesIniciales = [
-  { nombre: 'Local Central', usuario: 'central', password: 'central123' },
-  { nombre: 'Local Norte', usuario: 'norte', password: 'norte123' },
-  { nombre: 'Local Sur', usuario: 'sur', password: 'sur123' },
-  { nombre: 'Local Este', usuario: 'este', password: 'este123' },
-  { nombre: 'Local Oeste', usuario: 'oeste', password: 'oeste123' },
-  { nombre: 'Local Centro', usuario: 'centro', password: 'centro123' }
+  { nombre: 'Local Central', usuario: 'central' },
+  { nombre: 'Local Norte', usuario: 'norte' },
+  { nombre: 'Local Sur', usuario: 'sur' },
+  { nombre: 'Local Este', usuario: 'este' },
+  { nombre: 'Local Oeste', usuario: 'oeste' },
+  { nombre: 'Local Centro', usuario: 'centro' }
 ];
+
+// ✅ SEGURO: Función para obtener contraseñas de variables de entorno
+function getPassword(usuario) {
+  const envVar = `PASSWORD_${usuario.toUpperCase()}`;
+  const password = process.env[envVar];
+  
+  if (!password) {
+    console.error(`❌ Error: Falta variable de entorno ${envVar}`);
+    console.log(`💡 Solución: Definir en Render: ${envVar}=tu_contraseña_segura`);
+    return null;
+  }
+  
+  if (password.length < 8) {
+    console.error(`❌ Error: La contraseña para ${usuario} debe tener al menos 8 caracteres`);
+    return null;
+  }
+  
+  return password;
+}
 
 async function inicializarSupabase() {
   try {
-    console.log('🚀 Iniciando configuración de Supabase...');
+    console.log('🚀 Iniciando configuración SEGURA de Supabase...');
 
     // Verificar conexión
     console.log('📡 Verificando conexión con Supabase...');
@@ -44,14 +63,37 @@ async function inicializarSupabase() {
       return;
     }
 
-    // Insertar locales iniciales
-    console.log('👥 Insertando locales iniciales...');
+    // Verificar que todas las variables de entorno estén disponibles
+    console.log('🔐 Verificando variables de entorno...');
+    const missingPasswords = [];
+    
+    for (const local of localesIniciales) {
+      const password = getPassword(local.usuario);
+      if (!password) {
+        missingPasswords.push(local.usuario);
+      }
+    }
+    
+    if (missingPasswords.length > 0) {
+      console.error('❌ Error: Faltan variables de entorno para las contraseñas');
+      console.log('💡 Define estas variables en Render:');
+      missingPasswords.forEach(usuario => {
+        console.log(`   PASSWORD_${usuario.toUpperCase()}=tu_contraseña_segura`);
+      });
+      console.log('\n🔧 Alternativamente, usa el script crear-usuarios-seguro.js');
+      return;
+    }
+
+    // Insertar locales iniciales con contraseñas seguras
+    console.log('👥 Insertando locales con contraseñas seguras...');
     
     for (const local of localesIniciales) {
       try {
-        // Encriptar contraseña
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(local.password, salt);
+        const password = getPassword(local.usuario);
+        
+        // Encriptar contraseña con salt fuerte
+        const salt = await bcrypt.genSalt(12);
+        const hashedPassword = await bcrypt.hash(password, salt);
 
         const { data, error } = await supabase
           .from('usuarios')
@@ -73,12 +115,14 @@ async function inicializarSupabase() {
       }
     }
 
-    console.log('🎉 Inicialización de Supabase completada exitosamente');
+    console.log('🎉 Inicialización SEGURA de Supabase completada exitosamente');
     console.log('');
-    console.log('📋 Credenciales de los locales:');
+    console.log('📋 Usuarios creados (contraseñas en variables de entorno):');
     localesIniciales.forEach(local => {
-      console.log(`   ${local.nombre}: usuario="${local.usuario}", password="${local.password}"`);
+      console.log(`   ${local.nombre}: usuario="${local.usuario}"`);
     });
+    console.log('');
+    console.log('🔒 Las contraseñas están protegidas en variables de entorno');
 
   } catch (error) {
     console.error('❌ Error durante la inicialización:', error);
@@ -89,7 +133,7 @@ async function inicializarSupabase() {
 if (require.main === module) {
   inicializarSupabase()
     .then(() => {
-      console.log('🏁 Script de inicialización finalizado');
+      console.log('🏁 Script de inicialización SEGURO finalizado');
       process.exit(0);
     })
     .catch((error) => {
@@ -99,4 +143,3 @@ if (require.main === module) {
 }
 
 module.exports = { inicializarSupabase };
-
